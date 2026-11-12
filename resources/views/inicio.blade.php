@@ -14,8 +14,8 @@
         <h1>Perdeu algo na escola?</h1>
 
         <p>
-            Aqui você pode encontrar seus objetos perdidos
-            ou cadastrar algo que encontrou.
+            Consulte os objetos encontrados na escola. O cadastro e a atualização
+            dos itens são feitos somente pela equipe administradora.
         </p>
 
         <div class="welcome-buttons">
@@ -24,8 +24,8 @@
                 Procurar objetos
             </a>
 
-            <a href="{{ route('objetos.create') }}" class="btn-outline">
-                Cadastrar objeto
+            <a href="{{ route('login') }}" class="btn-outline">
+                Área do administrador
             </a>
 
         </div>
@@ -82,8 +82,8 @@
             <h3>Cadastre</h3>
 
             <p>
-                Encontrou algum objeto? Cadastre as informações
-                e uma foto no portal.
+                A equipe administradora registra as informações
+                e uma foto do objeto encontrado.
             </p>
         </div>
 

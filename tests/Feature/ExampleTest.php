@@ -2,18 +2,24 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\Objeto;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     */
-    public function test_the_application_returns_a_successful_response(): void
-    {
-        $response = $this->get('/');
+    use LazilyRefreshDatabase;
 
-        $response->assertStatus(200);
+    public function test_homepage_shows_object_statistics(): void
+    {
+        Objeto::factory()->create(['status' => 'disponível']);
+        Objeto::factory()->create(['status' => 'devolvido']);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Objetos cadastrados')
+            ->assertSee('2', false)
+            ->assertSee('Objetos devolvidos')
+            ->assertSee('Objetos disponíveis');
     }
 }

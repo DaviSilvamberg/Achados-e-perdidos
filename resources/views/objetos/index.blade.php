@@ -13,9 +13,11 @@
         <p>Confira os objetos registrados na escola.</p>
     </div>
 
-    <a href="{{ route('objetos.create') }}" class="btn-primary">
-        + Novo cadastro
-    </a>
+    @can('administrar-objetos')
+        <a href="{{ route('objetos.create') }}" class="btn-primary">
+            + Novo cadastro
+        </a>
+    @endcan
 
 </div>
 
@@ -39,12 +41,18 @@
 
             <option value="">Todas as categorias</option>
 
-            <option value="Material escolar">Material escolar</option>
-            <option value="Eletrônicos">Eletrônicos</option>
-            <option value="Roupas e acessórios">Roupas e acessórios</option>
-            <option value="Garrafas e lancheiras">Garrafas e lancheiras</option>
-            <option value="Documentos">Documentos</option>
-            <option value="Outros">Outros</option>
+            @foreach([
+                'Material escolar',
+                'Eletrônicos',
+                'Roupas e acessórios',
+                'Garrafas e lancheiras',
+                'Documentos',
+                'Outros'
+            ] as $categoria)
+                <option value="{{ $categoria }}" {{ request('categoria') === $categoria ? 'selected' : '' }}>
+                    {{ $categoria }}
+                </option>
+            @endforeach
 
         </select>
     </div>
@@ -55,9 +63,11 @@
         <select name="turno">
 
             <option value="">Todos os turnos</option>
-            <option value="Matutino">Matutino</option>
-            <option value="Vespertino">Vespertino</option>
-            <option value="Noturno">Noturno</option>
+            @foreach(['Matutino', 'Vespertino', 'Noturno'] as $turno)
+                <option value="{{ $turno }}" {{ request('turno') === $turno ? 'selected' : '' }}>
+                    {{ $turno }}
+                </option>
+            @endforeach
 
         </select>
     </div>
@@ -79,7 +89,7 @@
                 @if($objeto->foto)
 
                     <img
-                        src="{{ asset('storage/' . $objeto->foto) }}"
+                        src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($objeto->foto) }}"
                         alt="{{ $objeto->titulo }}"
                     >
 
@@ -97,9 +107,7 @@
 
             <div class="object-info">
 
-                <span class="category-tag">
-                    {{ $objeto->categoria }}
-                </span>
+                <span class="category-tag">{{ $objeto->categoria }}</span>
 
                 <h3>{{ $objeto->titulo }}</h3>
 
@@ -110,31 +118,29 @@
                     <span>🕒 {{ $objeto->turno }}</span>
                 </div>
 
-                <div class="object-actions">
+                @can('administrar-objetos')
+                    <div class="object-actions">
+                        <a
+                            href="{{ route('objetos.edit', $objeto->id) }}"
+                            class="btn-edit"
+                        >
+                            Editar
+                        </a>
 
-                    <a
-                        href="{{ route('objetos.edit', $objeto->id) }}"
-                        class="btn-edit"
-                    >
-                        Editar
-                    </a>
+                        <form
+                            action="{{ route('objetos.destroy', $objeto->id) }}"
+                            method="POST"
+                            onsubmit="return confirm('Deseja excluir este objeto?')"
+                        >
+                            @csrf
+                            @method('DELETE')
 
-                    <form
-                        action="{{ route('objetos.destroy', $objeto->id) }}"
-                        method="POST"
-                        onsubmit="return confirm('Deseja excluir este objeto?')"
-                    >
-
-                        @csrf
-                        @method('DELETE')
-
-                        <button type="submit" class="btn-delete">
-                            Excluir
-                        </button>
-
-                    </form>
-
-                </div>
+                            <button type="submit" class="btn-delete">
+                                Excluir
+                            </button>
+                        </form>
+                    </div>
+                @endcan
 
             </div>
 

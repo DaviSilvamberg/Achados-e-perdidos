@@ -102,12 +102,12 @@
                 <select name="status" required>
 
                     <option value="disponível"
-                        {{ old('status', $objeto->status) == 'disponível' ? 'selected' : '' }}>
+                        {{ old('status', $objeto->status) === 'disponível' ? 'selected' : '' }}>
                         Disponível
                     </option>
 
                     <option value="devolvido"
-                        {{ old('status', $objeto->status) == 'devolvido' ? 'selected' : '' }}>
+                        {{ old('status', $objeto->status) === 'devolvido' ? 'selected' : '' }}>
                         Devolvido
                     </option>
 
@@ -126,7 +126,7 @@
                 @if($objeto->foto)
 
                     <img
-                        src="{{ asset('storage/' . $objeto->foto) }}"
+                        src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($objeto->foto) }}"
                         class="preview-image"
                         alt="Foto do objeto"
                     >
