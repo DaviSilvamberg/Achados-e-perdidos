@@ -22,6 +22,8 @@ Route::get('/objetos', [ObjetoController::class, 'index'])->name('objetos.index'
 
 Route::middleware(['auth', 'can:administrar-objetos'])->group(function (): void {
     Route::get('/admin', fn () => redirect()->route('objetos.index'))->name('admin.dashboard');
+    Route::get('/admin/senha', [AdminAuthController::class, 'editPassword'])->name('admin.password.edit');
+    Route::post('/admin/senha', [AdminAuthController::class, 'updatePassword'])->name('admin.password.update');
 
     Route::resource('objetos', ObjetoController::class)->only([
         'create',

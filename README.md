@@ -35,21 +35,22 @@ marcar como devolvido e excluir objetos.
    npm run build
    ```
 
-3. Configure a conta administrativa no `.env`, sem compartilhar esses valores:
+3. Configure a senha inicial do painel no `.env`:
 
    ```dotenv
-   ADMIN_EMAIL=admin@escola.com
    ADMIN_PASSWORD=uma-senha-forte
    ```
 
-4. Crie a conta administrativa:
+4. Crie a conta administrativa inicial:
 
    ```bash
    php artisan db:seed
    ```
 
-   Para alterar a senha depois, atualize `ADMIN_PASSWORD` e execute novamente
-   `php artisan db:seed`.
+   O acesso ao painel é feito somente com essa senha, em `/admin/login`. Depois
+   de entrar, use **Alterar senha** no menu para definir uma nova senha. A
+   configuração `ADMIN_PASSWORD` é usada apenas para criar a conta inicial;
+   executar o seeder novamente não substitui uma senha já alterada pelo painel.
 
 5. Inicie o servidor local:
 

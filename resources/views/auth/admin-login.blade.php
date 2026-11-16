@@ -8,20 +8,15 @@
         <div class="form-heading">
             <div class="form-icon">🔐</div>
             <h1>Entrar na administração</h1>
-            <p>Somente contas autorizadas podem cadastrar e atualizar objetos.</p>
+            <p>Informe a senha para acessar o painel de administração.</p>
         </div>
 
         <form action="{{ route('admin.login.store') }}" method="POST">
             @csrf
 
-            <div class="form-group">
-                <label for="email">E-mail</label>
-                <input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="username" required autofocus>
-            </div>
-
             <div class="form-group login-password">
                 <label for="password">Senha</label>
-                <input id="password" type="password" name="password" autocomplete="current-password" required>
+                <input id="password" type="password" name="password" autocomplete="current-password" required autofocus>
             </div>
 
             <label class="remember-option">

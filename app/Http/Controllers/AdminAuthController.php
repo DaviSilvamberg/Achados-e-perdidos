@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AdminAuthController extends Controller
 {
@@ -21,29 +23,39 @@ class AdminAuthController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        $admin = User::query()->where('is_admin', true)->first();
+
+        if ($admin === null || ! Hash::check($credentials['password'], $admin->password)) {
             return back()->withErrors([
-                'email' => 'E-mail ou senha inválidos.',
-            ])->onlyInput('email');
+                'password' => 'Senha inválida.',
+            ])->onlyInput('remember');
         }
 
-        if (! Auth::user()->isAdmin()) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()->route('login')->withErrors([
-                'email' => 'Esta conta não possui acesso de administrador.',
-            ])->onlyInput('email');
-        }
-
+        Auth::login($admin, $request->boolean('remember'));
         $request->session()->regenerate();
 
         return redirect()->intended(route('admin.dashboard'));
+    }
+
+    public function editPassword(): View
+    {
+        return view('auth.admin-password');
+    }
+
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
+        ]);
+
+        $request->user()->update(['password' => $data['password']]);
+
+        return redirect()->route('admin.password.edit')
+            ->with('success', 'Senha alterada com sucesso.');
     }
 
     public function destroy(Request $request): RedirectResponse

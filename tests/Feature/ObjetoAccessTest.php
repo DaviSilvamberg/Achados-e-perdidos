@@ -107,17 +107,17 @@ class ObjetoAccessTest extends TestCase
         Storage::disk('public')->assertMissing($fotoNova);
     }
 
-    public function test_admin_can_sign_in_but_non_admin_accounts_cannot(): void
+    public function test_admin_can_sign_in_with_only_a_password_and_rejects_an_invalid_password(): void
     {
         $admin = $this->createAdmin();
 
         $this->get(route('login'))
             ->assertOk()
-            ->assertSee('Entrar na administração');
+            ->assertSee('Entrar na administração')
+            ->assertDontSee('name="email"');
 
         $this->post(route('admin.login.store'), [
-            'email' => $admin->email,
-            'password' => 'password',
+            'password' => 'admin-test-password',
         ])
             ->assertRedirect(route('admin.dashboard'));
 
@@ -125,14 +125,11 @@ class ObjetoAccessTest extends TestCase
 
         auth()->logout();
 
-        $user = User::factory()->create();
-
         $this->post(route('admin.login.store'), [
-            'email' => $user->email,
             'password' => 'password',
         ])
             ->assertRedirect(route('login'))
-            ->assertSessionHasErrors('email');
+            ->assertSessionHasErrors('password');
 
         $this->assertGuest();
     }
@@ -140,16 +137,97 @@ class ObjetoAccessTest extends TestCase
     public function test_admin_seeder_creates_the_account_from_configuration(): void
     {
         config([
-            'admin.email' => 'admin@example.test',
             'admin.password' => 'local-test-password',
         ]);
 
         $this->seed(AdminUserSeeder::class);
 
-        $admin = User::where('email', 'admin@example.test')->firstOrFail();
+        $admin = User::where('is_admin', true)->firstOrFail();
 
         $this->assertTrue($admin->isAdmin());
         $this->assertTrue(password_verify('local-test-password', $admin->password));
+
+        $admin->password = 'changed-in-panel';
+        $admin->save();
+
+        $this->seed(AdminUserSeeder::class);
+
+        $this->assertTrue(password_verify('changed-in-panel', $admin->refresh()->password));
+    }
+
+    public function test_admin_can_change_the_panel_password_after_confirming_the_current_password(): void
+    {
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.password.edit'))
+            ->assertOk()
+            ->assertSee('Alterar senha do painel');
+
+        $this->post(route('admin.password.update'), [
+            'current_password' => 'admin-test-password',
+            'password' => 'new-admin-password',
+            'password_confirmation' => 'new-admin-password',
+        ])
+            ->assertRedirect(route('admin.password.edit'))
+            ->assertSessionHas('success', 'Senha alterada com sucesso.');
+
+        $admin->refresh();
+        $this->assertTrue(password_verify('new-admin-password', $admin->password));
+
+        auth()->logout();
+
+        $this->post(route('admin.login.store'), [
+            'password' => 'new-admin-password',
+        ])->assertRedirect(route('admin.dashboard'));
+
+        $this->assertAuthenticatedAs($admin);
+    }
+
+    public function test_admin_cannot_change_the_password_with_an_invalid_current_password(): void
+    {
+        $admin = $this->createAdmin();
+        $originalHash = $admin->password;
+
+        $this->actingAs($admin)
+            ->post(route('admin.password.update'), [
+                'current_password' => 'wrong-password',
+                'password' => 'new-admin-password',
+                'password_confirmation' => 'new-admin-password',
+            ])
+            ->assertSessionHasErrors('current_password');
+
+        $this->assertSame($originalHash, $admin->refresh()->password);
+    }
+
+    public function test_admin_cannot_change_the_password_without_matching_confirmation(): void
+    {
+        $admin = $this->createAdmin();
+        $originalHash = $admin->password;
+
+        $this->actingAs($admin)
+            ->post(route('admin.password.update'), [
+                'current_password' => 'admin-test-password',
+                'password' => 'new-admin-password',
+                'password_confirmation' => 'different-password',
+            ])
+            ->assertSessionHasErrors('password');
+
+        $this->assertSame($originalHash, $admin->refresh()->password);
+    }
+
+    public function test_non_admin_cannot_access_admin_password_settings(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('admin.password.edit'))
+            ->assertForbidden();
+
+        auth()->logout();
+
+        $this->get(route('admin.password.edit'))
+            ->assertRedirect(route('login'));
     }
 
     public function test_admin_photo_upload_rejects_non_image_files(): void
@@ -168,7 +246,7 @@ class ObjetoAccessTest extends TestCase
 
     private function createAdmin(): User
     {
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['password' => 'admin-test-password']);
         $admin->is_admin = true;
         $admin->save();
 

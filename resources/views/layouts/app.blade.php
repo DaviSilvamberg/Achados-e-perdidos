@@ -34,6 +34,10 @@
                 <a href="{{ route('objetos.create') }}" class="nav-link">
                     ➕ Cadastrar objeto
                 </a>
+
+                <a href="{{ route('admin.password.edit') }}" class="nav-link">
+                    🔑 Alterar senha
+                </a>
             @else
                 <a href="{{ route('login') }}" class="nav-link">
                     🔐 Acesso do administrador
